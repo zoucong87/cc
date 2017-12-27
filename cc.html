@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <script src="https://unpkg.com/vue"></script>
+    <style type="text/css">
+    table.gridtable {
+        font-family: verdana, arial, sans-serif;
+        font-size: 14px;
+        color: #333333;
+        border-width: 1px;
+        border-color: #666666;
+        border-collapse: collapse;
+        margin: 0 auto;
+        /*display: none;*/
+    }
+
+    table.gridtable th {
+        border-width: 1px;
+        padding: 20px;
+        border-style: solid;
+        border-color: #666666;
+        background-color: #dedede;
+        cursor: pointer
+    }
+
+    table.gridtable td {
+        border-width: 1px;
+        padding: 20px;
+        border-style: solid;
+        border-color: #666666;
+        height: 30px;
+        cursor: pointer
+        /*background: #ffffff;*/
+    }
+
+    button {
+        padding: 5px 10px;
+    }
+
+    .selected {
+        background: #FF0000;
+    }
+
+    .block {
+        filter: alpha(Opacity=80);
+        -moz-opacity: 0.8;
+        opacity: 0.8;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        background: #ccc;
+        z-index: 999;
+        top: 0;
+        text-align: center;
+    }
+
+    .hide {
+        display: none;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div style="margin: 0 auto;width:600px;padding:10px">位数选择:
+            <button value="wan" v-on:click="digitSelected">万</button>
+            <button value="qian" v-on:click="digitSelected">千</button>
+            <button value="bai" v-on:click="digitSelected">百</button>
+            <button value="shi" v-on:click="digitSelected">十</button>
+            <button value="ge" v-on:click="digitSelected">个</button>
+        </div>
+        <div style="margin: 0 auto;width:600px;padding:10px">当前位数: {{currentDigitDesc}}</div>
+        <table v-for="(ditem, dindex) in digits" :class="[dindex == currentDigit ? 'gridtable' : 'hide']">
+            <tr>
+                <th width="60"></th>
+                <th width="30" v-on:click="columnSelected">0</th>
+                <th width="30" v-on:click="columnSelected">1</th>
+                <th width="30" v-on:click="columnSelected">2</th>
+                <th width="30" v-on:click="columnSelected">3</th>
+                <th width="30" v-on:click="columnSelected">4</th>
+                <th width="30" v-on:click="columnSelected">5</th>
+                <th width="30" v-on:click="columnSelected">6</th>
+                <th width="30" v-on:click="columnSelected">7</th>
+                <th width="30" v-on:click="columnSelected">8</th>
+                <th width="30" v-on:click="columnSelected">9</th>
+                <th width="30" v-on:click="columnSelected">x</th>
+                <th></th>
+            </tr>
+            <tr>
+                <td colspan="13" style="padding:0;border:0">
+                    <table class="gridtable" :class="{selected:item.currentRow}" style="width:100%" v-for="(item, index) in ditem.configs">
+                        <tr>
+                            <td width="60" rowspan="2" v-on:click="rowSelected(index,$event)">{{index +1}}</td>
+                            <td width="30" :class="{selected:item.checked[1] || ditem.currentColumn == '0'}" v-on:click="selected(index,$event)">0</td>
+                            <td width="30" :class="{selected:item.checked[2] || ditem.currentColumn == '1'}" v-on:click="selected(index,$event)">1</td>
+                            <td width="30" :class="{selected:item.checked[3] || ditem.currentColumn == '2'}" v-on:click="selected(index,$event)">2</td>
+                            <td width="30" :class="{selected:item.checked[4] || ditem.currentColumn == '3'}" v-on:click="selected(index,$event)">3</td>
+                            <td width="30" :class="{selected:item.checked[5] || ditem.currentColumn == '4'}" v-on:click="selected(index,$event)">4</td>
+                            <td width="30" :class="{selected:item.checked[6] || ditem.currentColumn == '5'}" v-on:click="selected(index,$event)">5</td>
+                            <td width="30" :class="{selected:item.checked[7] || ditem.currentColumn == '6'}" v-on:click="selected(index,$event)">6</td>
+                            <td width="30" :class="{selected:item.checked[8] || ditem.currentColumn == '7'}" v-on:click="selected(index,$event)">7</td>
+                            <td width="30" :class="{selected:item.checked[9] || ditem.currentColumn == '8'}" v-on:click="selected(index,$event)">8</td>
+                            <td width="30" :class="{selected:item.checked[10] || ditem.currentColumn == '9'}" v-on:click="selected(index,$event)">9</td>
+                            <td width="30" rowspan="2">{{item['s'+(Number(ditem.currentColumn)+1)] ? ditem.currentColumn : ''}}</td>
+                            <td rowspan="2">
+                                <div>
+                                    <div style="float: left">
+                                        <div style="padding: 5px">
+                                            <button value="a1" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter== 'a1'}">A1</button>
+                                            <button value="b1" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='b1'}">B1</button>
+                                            <button value="c1" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='c1'}">C1</button>
+                                            <button value="d1" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='d1'}">D1</button>
+                                        </div>
+                                        <div style="padding: 5px">
+                                            <button value="a2" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='a2'}">A2</button>
+                                            <button value="b2" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='b2'}">B2</button>
+                                            <button value="c2" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='c2'}">C2</button>
+                                            <button value="d2" v-on:click="letterClick(index,$event)" :class="{selected:item.currentLetter=='d2'}">D2</button>
+                                        </div>
+                                    </div>
+                                    <div style="float: right;margin-left: 30px;padding: 5px">
+                                        <button v-on:click="setting(index)">设定</button>
+                                        <button v-on:click='finish(index)'>完成</button>
+                                        <button v-on:click="clear(index)">清除</button>
+                                    </div>
+                                </div>
+                                <br>
+                                <div style="float:left;padding: 5px">
+                                    <button value="n1" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n1'}">1</button>
+                                    <button value="n2" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n2'}">2</button>
+                                    <button value="n3" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n3'}">3</button>
+                                    <button value="n4" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n4'}">4</button>
+                                    <button value="n5" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n5'}">5</button>
+                                    <button value="n6" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n6'}">6</button>
+                                    <button value="n7" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n7'}">7</button>
+                                    <button value="n8" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n8'}">8</button>
+                                    <button value="n9" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n9'}">9</button>
+                                    <button value="n10" v-on:click="numberClick(index,$event)" :class="{selected:item.currentNumber=='n10'}">10</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" :class="{selected:ditem.currentColumn == '0'}">{{item.s1}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '1'}">{{item.s2}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '2'}">{{item.s3}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '3'}">{{item.s4}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '4'}">{{item.s5}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '5'}">{{item.s6}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '6'}">{{item.s7}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '7'}">{{item.s8}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '8'}">{{item.s9}}</td>
+                            <td width="30" :class="{selected:ditem.currentColumn == '9'}">{{item.s10}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <th width="60"></th>
+                <th width="30" v-on:click="columnSelected">0</th>
+                <th width="30" v-on:click="columnSelected">1</th>
+                <th width="30" v-on:click="columnSelected">2</th>
+                <th width="30" v-on:click="columnSelected">3</th>
+                <th width="30" v-on:click="columnSelected">4</th>
+                <th width="30" v-on:click="columnSelected">5</th>
+                <th width="30" v-on:click="columnSelected">6</th>
+                <th width="30" v-on:click="columnSelected">7</th>
+                <th width="30" v-on:click="columnSelected">8</th>
+                <th width="30" v-on:click="columnSelected">9</th>
+                <th width="30" v-on:click="columnSelected"></th>
+                <th></th>
+            </tr>
+            <tr>
+                <td widtd="60">合计</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '0'}">{{ditem.c1}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '1'}">{{ditem.c2}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '2'}">{{ditem.c3}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '3'}">{{ditem.c4}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '4'}">{{ditem.c5}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '5'}">{{ditem.c6}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '6'}">{{ditem.c7}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '7'}">{{ditem.c8}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '8'}">{{ditem.c9}}</td>
+                <td widtd="30" :class="{selected:ditem.currentColumn == '9'}">{{ditem.c10}}</td>
+                <td widtd="30"></td>
+                <td>{{ditem.c11}}</td>
+            </tr>
+        </table>
+    </div>
+    <script type="text/javascript">
+    new Vue({
+        el: '#app',
+        data: {
+            currentDigit: 'wan',
+            currentDigitDesc: '万',
+            digits: {
+                wan: {
+                    desc: '万',
+                    configs: [{
+                        canEdit: false,
+                        a1: {},
+                        b1: {},
+                        c1: {},
+                        d1: {},
+                        a2: {},
+                        b2: {},
+                        c2: {},
+                        d2: {},
+                        n1: '',
+                        n2: '',
+                        n3: '',
+                        n4: '',
+                        n5: '',
+                        n6: '',
+                        n7: '',
+                        n8: '',
+                        n9: '',
+                        n10: '',
+                        s1: '',
+                        s2: '',
+                        s3: '',
+                        s4: '',
+                        s5: '',
+                        s6: '',
+                        s7: '',
+                        s8: '',
+                        s9: '',
+                        s10: '',
+                        checked: {},
+                        currentLetter: '',
+                        currentNumber: '',
+                        tmpchecked: {},
+                        currentRow: false,
+                        currentColumn: '',
+                        lastClick: ''
+                    }],
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    c5: 0,
+                    c6: 0,
+                    c7: 0,
+                    c8: 0,
+                    c9: 0,
+                    c10: 0,
+                    c11: 0,
+                    currentColumn: ''
+                },
+                qian: {
+                    desc: '千',
+                    configs: [{
+                        canEdit: false,
+                        a1: {},
+                        b1: {},
+                        c1: {},
+                        d1: {},
+                        a2: {},
+                        b2: {},
+                        c2: {},
+                        d2: {},
+                        n1: '',
+                        n2: '',
+                        n3: '',
+                        n4: '',
+                        n5: '',
+                        n6: '',
+                        n7: '',
+                        n8: '',
+                        n9: '',
+                        n10: '',
+                        s1: '',
+                        s2: '',
+                        s3: '',
+                        s4: '',
+                        s5: '',
+                        s6: '',
+                        s7: '',
+                        s8: '',
+                        s9: '',
+                        s10: '',
+                        checked: {},
+                        currentLetter: '',
+                        currentNumber: '',
+                        tmpchecked: {},
+                        currentRow: false,
+                        currentColumn: '',
+                        lastClick: ''
+                    }],
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    c5: 0,
+                    c6: 0,
+                    c7: 0,
+                    c8: 0,
+                    c9: 0,
+                    c10: 0,
+                    c11: 0,
+                    currentColumn: ''
+                },
+                bai: {
+                    desc: '百',
+                    configs: [{
+                        canEdit: false,
+                        a1: {},
+                        b1: {},
+                        c1: {},
+                        d1: {},
+                        a2: {},
+                        b2: {},
+                        c2: {},
+                        d2: {},
+                        n1: '',
+                        n2: '',
+                        n3: '',
+                        n4: '',
+                        n5: '',
+                        n6: '',
+                        n7: '',
+                        n8: '',
+                        n9: '',
+                        n10: '',
+                        s1: '',
+                        s2: '',
+                        s3: '',
+                        s4: '',
+                        s5: '',
+                        s6: '',
+                        s7: '',
+                        s8: '',
+                        s9: '',
+                        s10: '',
+                        checked: {},
+                        currentLetter: '',
+                        currentNumber: '',
+                        tmpchecked: {},
+                        currentRow: false,
+                        currentColumn: '',
+                        lastClick: ''
+                    }],
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    c5: 0,
+                    c6: 0,
+                    c7: 0,
+                    c8: 0,
+                    c9: 0,
+                    c10: 0,
+                    c11: 0,
+                    currentColumn: ''
+                },
+                shi: {
+                    desc: '十',
+                    configs: [{
+                        canEdit: false,
+                        a1: {},
+                        b1: {},
+                        c1: {},
+                        d1: {},
+                        a2: {},
+                        b2: {},
+                        c2: {},
+                        d2: {},
+                        n1: '',
+                        n2: '',
+                        n3: '',
+                        n4: '',
+                        n5: '',
+                        n6: '',
+                        n7: '',
+                        n8: '',
+                        n9: '',
+                        n10: '',
+                        s1: '',
+                        s2: '',
+                        s3: '',
+                        s4: '',
+                        s5: '',
+                        s6: '',
+                        s7: '',
+                        s8: '',
+                        s9: '',
+                        s10: '',
+                        checked: {},
+                        currentLetter: '',
+                        currentNumber: '',
+                        tmpchecked: {},
+                        currentRow: false,
+                        currentColumn: '',
+                        lastClick: ''
+                    }],
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    c5: 0,
+                    c6: 0,
+                    c7: 0,
+                    c8: 0,
+                    c9: 0,
+                    c10: 0,
+                    c11: 0,
+                    currentColumn: ''
+                },
+                ge: {
+                    desc: '个',
+                    configs: [{
+                        canEdit: false,
+                        a1: {},
+                        b1: {},
+                        c1: {},
+                        d1: {},
+                        a2: {},
+                        b2: {},
+                        c2: {},
+                        d2: {},
+                        n1: '',
+                        n2: '',
+                        n3: '',
+                        n4: '',
+                        n5: '',
+                        n6: '',
+                        n7: '',
+                        n8: '',
+                        n9: '',
+                        n10: '',
+                        s1: '',
+                        s2: '',
+                        s3: '',
+                        s4: '',
+                        s5: '',
+                        s6: '',
+                        s7: '',
+                        s8: '',
+                        s9: '',
+                        s10: '',
+                        checked: {},
+                        currentLetter: '',
+                        currentNumber: '',
+                        tmpchecked: {},
+                        currentRow: false,
+                        currentColumn: '',
+                        lastClick: ''
+                    }],
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    c5: 0,
+                    c6: 0,
+                    c7: 0,
+                    c8: 0,
+                    c9: 0,
+                    c10: 0,
+                    c11: 0,
+                    currentColumn: ''
+                }
+            },
+            maxRows: 2
+
+        },
+        created: function() {
+            var cacheConfig = localStorage.digits
+            if (typeof(cacheConfig) == 'undefined') {
+                console.log('aaa')
+                for (var k in this.digits) {
+                    for (var i = 1; i < this.maxRows; i++) {
+                        var c = JSON.parse(JSON.stringify(this.digits[k].configs[0]));
+                        this.digits[k].configs.push(c)
+                    }
+                }
+            } else {
+                console.log('bbb')
+                var digits = JSON.parse(cacheConfig)
+                for(var i in digits)
+                {
+                    digits[i].c1 =  0
+                    digits[i].c2 =  0
+                    digits[i].c3 =  0
+                    digits[i].c4 =  0
+                    digits[i].c5 =  0
+                    digits[i].c6 =  0
+                    digits[i].c7 =  0
+                    digits[i].c8 =  0
+                    digits[i].c9 =  0
+                    digits[i].c10 =  0
+                    digits[i].c11 =  0
+                    digits[i].c7 =  0
+                    digits[i].currentColumn = ''
+                    for (var k in digits.configs)
+                    {
+                        digits.configs[k].canEdit = false
+                        digits.configs[k].s1 = ''
+                        digits.configs[k].s2 = ''
+                        digits.configs[k].s3 = ''
+                        digits.configs[k].s4 = ''
+                        digits.configs[k].s5 = ''
+                        digits.configs[k].s6 = ''
+                        digits.configs[k].s7 = ''
+                        digits.configs[k].s8 = ''
+                        digits.configs[k].s9 = ''
+                        digits.configs[k].s10 = ''
+                        digits.configs[k].checked = {}
+                        digits.configs[k].currentLetter = ''
+                        digits.configs[k].currentNumber = ''
+                        digits.configs[k].tmpchecked = {}
+                        digits.configs[k].currentRow = false
+                        digits.configs[k].currentColumn = ''
+                        digits.configs[k].lastClick = ''
+                    }
+                }
+                this.digits = digits
+                console.log(digits)
+            }
+
+
+
+        },
+        methods: {
+            digitSelected: function(e) {
+                var v = e.target.value
+                this.currentDigit = v
+                this.currentDigitDesc = this.digits[this.currentDigit].desc
+            },
+            setting: function(index) {
+                this.digits[this.currentDigit].configs[index].canEdit = true
+                if (this.digits[this.currentDigit].configs[index].lastClick == 'number') {
+                    var s = prompt("请输入数值", "")
+                    if (s != '') {
+                        this.digits[this.currentDigit].configs[index][this.digits[this.currentDigit].configs[index].currentNumber] = s
+                        this.saveConfigs()
+                        this.inits(index)
+                    }
+                }
+            },
+            finish: function(index) {
+                this.inits(index)
+                this.digits[this.currentDigit].configs[index].canEdit = false
+            },
+            rowSelected: function(index, e) {
+                console.log('a:' + index)
+                this.digits[this.currentDigit].configs[index].currentRow = !this.digits[this.currentDigit].configs[index].currentRow
+            },
+            columnSelected: function(e) {
+                var v = e.target.innerHTML
+                this.digits[this.currentDigit].currentColumn = (this.digits[this.currentDigit].currentColumn == v) ? '' : v
+                // this.currentColumn = e.target.innerHTML
+            },
+            letterClick: function(index, e) {
+                this.digits[this.currentDigit].configs[index].lastClick = 'letter'
+                var v = e.target.value
+                this.digits[this.currentDigit].configs[index].currentLetter = v
+                this.digits[this.currentDigit].configs[index].checked = {}
+                this.digits[this.currentDigit].configs[index].checked = this.digits[this.currentDigit].configs[index][v]
+                this.digits[this.currentDigit].configs[index].tmpchecked = this.digits[this.currentDigit].configs[index][v]
+                this.inits(index)
+
+            },
+            numberClick: function(index, e) {
+                this.digits[this.currentDigit].configs[index].lastClick = 'number'
+                this.digits[this.currentDigit].configs[index].currentNumber = e.target.value
+                this.inits(index)
+            },
+            selected: function(index, e) {
+                if (this.digits[this.currentDigit].configs[index].canEdit) {
+                    var v = Number(e.target.innerHTML) + 1
+                    this.digits[this.currentDigit].configs[index].tmpchecked[v] = true
+                    this.saveConfigs()
+                    this.digits[this.currentDigit].configs[index].checked = {}
+                    this.digits[this.currentDigit].configs[index].checked = this.digits[this.currentDigit].configs[index].tmpchecked
+                }
+            },
+            clear: function(index) {
+                if (confirm('确定要清除吗？')) {
+                    this.digits[this.currentDigit].configs[index].canEdit = false
+                    var currentLetter = this.digits[this.currentDigit].configs[index].currentLetter
+                    var currentNumber = this.digits[this.currentDigit].configs[index].currentNumber
+                    this.digits[this.currentDigit].configs[index][currentLetter] = {}
+                    this.digits[this.currentDigit].configs[index][currentNumber] = ''
+                    this.digits[this.currentDigit].configs[index].s1 = ''
+                    this.digits[this.currentDigit].configs[index].s2 = ''
+                    this.digits[this.currentDigit].configs[index].s3 = ''
+                    this.digits[this.currentDigit].configs[index].s4 = ''
+                    this.digits[this.currentDigit].configs[index].s5 = ''
+                    this.digits[this.currentDigit].configs[index].s6 = ''
+                    this.digits[this.currentDigit].configs[index].s7 = ''
+                    this.digits[this.currentDigit].configs[index].s8 = ''
+                    this.digits[this.currentDigit].configs[index].s9 = ''
+                    this.digits[this.currentDigit].configs[index].s10 = ''
+                    this.digits[this.currentDigit].configs[index].checked = {}
+                    this.digits[this.currentDigit].configs[index].currentLetter = ''
+                    this.digits[this.currentDigit].configs[index].currentNumber = ''
+                    this.digits[this.currentDigit].configs[index].tmpchecked = {}
+                }
+            },
+            inits: function(index) {
+                for (var i = 1; i <= 10; i++) {
+                    this.digits[this.currentDigit].configs[index]['s' + i] = ''
+                }
+                if (this.digits[this.currentDigit].configs[index].currentNumber != '') {
+                    var s = this.digits[this.currentDigit].configs[index][this.digits[this.currentDigit].configs[index].currentNumber]
+                    console.log("ss:" + s)
+                    this['c' + i] = 0
+                    for (var i in this.digits[this.currentDigit].configs[index].checked) {
+                        var k = 's' + i
+                        this.digits[this.currentDigit].configs[index][k] = s
+                    }
+
+                }
+                for (var i = 1; i <= 10; i++) {
+                    this['c' + i] = 0
+                }
+
+                for (var i in this.digits[this.currentDigit].configs) {
+                    this.digits[this.currentDigit].c1 += Number(this.digits[this.currentDigit].configs[i].s1)
+                    this.digits[this.currentDigit].c2 += Number(this.digits[this.currentDigit].configs[i].s2)
+                    this.digits[this.currentDigit].c3 += Number(this.digits[this.currentDigit].configs[i].s3)
+                    this.digits[this.currentDigit].c4 += Number(this.digits[this.currentDigit].configs[i].s4)
+                    this.digits[this.currentDigit].c5 += Number(this.digits[this.currentDigit].configs[i].s5)
+                    this.digits[this.currentDigit].c6 += Number(this.digits[this.currentDigit].configs[i].s6)
+                    this.digits[this.currentDigit].c7 += Number(this.digits[this.currentDigit].configs[i].s7)
+                    this.digits[this.currentDigit].c8 += Number(this.digits[this.currentDigit].configs[i].s8)
+                    this.digits[this.currentDigit].c9 += Number(this.digits[this.currentDigit].configs[i].s9)
+                    this.digits[this.currentDigit].c10 += Number(this.digits[this.currentDigit].configs[i].s10)
+                }
+                this.digits[this.currentDigit].c11 = this.digits[this.currentDigit].c1 +
+                    this.digits[this.currentDigit].c2 +
+                    this.digits[this.currentDigit].c3 +
+                    this.digits[this.currentDigit].c4 +
+                    this.digits[this.currentDigit].c5 +
+                    this.digits[this.currentDigit].c6 +
+                    this.digits[this.currentDigit].c7 +
+                    this.digits[this.currentDigit].c8 +
+                    this.digits[this.currentDigit].c9 +
+                    this.digits[this.currentDigit].c10
+
+
+            },
+            saveConfigs: function() {
+                // JSON.parse(JSON.stringify(this.digits[k].configs[0]));
+                localStorage.digits = JSON.stringify(this.digits)
+            }
+        }
+    })
+    </script>
+</body>
+
+</html>
